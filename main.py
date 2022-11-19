@@ -1,11 +1,10 @@
 import scapy.all as scapy
 import argparse
 
-""""
+
 def get_args():
     options = argparse.ArgumentParser()
     options.add_argument(dest='target_ip')
-    options.add_argument('-p', '--port', dest='port', help='Port to scan')
     opts = options.parse_args()
 
     if not opts.target_ip:
@@ -14,21 +13,23 @@ def get_args():
     return opts
 
 
-args = get_args()
-"""
-
-
 def scan_ip(ip):
-    ans = scapy.ARP(pdst="192.168.1.1")
-    print(ans)
+    arp_req_frame = scapy.ARP(pdst=ip)
+    broadcast_frame = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    broadcast_arp_req_frame = broadcast_frame / arp_req_frame
+    hosts_list = scapy.srp(broadcast_arp_req_frame, timeout=2, verbose=False)[0]
+    table_with_ip = []
+    for i in range(0, len(hosts_list)):
+        client_dict = {"ip": hosts_list[i][1].psrc, "mac": hosts_list[i][1].hwsrc}
+        table_with_ip.append(client_dict)
+
+    print(table_with_ip)
 
 
 def main():
-    scan_ip(10)#args.target_ip)
+    args = get_args()
+    scan_ip(args.target_ip)
 
 
 if __name__ == '__main__':
     main()
-
-# options = OptionParser(usage='%prog server [options]', description='Test and exploit TLS heartbeat vulnerability aka heartbleed (CVE-2014-0160)')
-# options.add_option('-p', '--port', type='int', default=443, help='TCP port to test (default: 443)')
